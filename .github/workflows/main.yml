@@ -1,0 +1,53 @@
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, accuracy_score
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+
+# 1. Load the dataset
+df = pd.read_csv("Bitext_Sample_Customer_Service_Testing_Dataset.csv")
+
+# Inspect columns
+print("Dataset Shape:", df.shape)
+print("Columns:", df.columns.tolist())
+
+# 2. Define features (X) and target/labels (y)
+X = df["utterance"]
+y = df["intent"]  # You can also change this to 'category' if you want to classify by category instead
+
+# 3. Split into training and testing sets (e.g., 80% train, 20% test)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# 4. Build a Machine Learning Pipeline (TF-IDF + Logistic Regression)
+model_pipeline = Pipeline(
+    [
+        (
+            "tfidf",
+            TfidfVectorizer(stop_words="english", ngram_range=(1, 2)),
+        ),  # Converts text to numerical features
+        (
+            "clf",
+            LogisticRegression(max_iter=1000),
+        ),  # Intent classification model
+    ]
+)
+
+# 5. Train the model
+print("\nTraining the model...")
+model_pipeline.fit(X_train, y_train)
+
+# 6. Evaluate the model
+y_pred = model_pipeline.predict(X_test)
+print(f"Accuracy: {accuracy_score(y_test, y_pred):.4f}\n")
+print("Classification Report:")
+print(classification_report(y_test, y_pred))
+
+# 7. Test with a custom user query
+sample_query = ["Where is my package and when will it arrive?"]
+predicted_intent = model_pipeline.predict(sample_query)
+print(
+    f"Query: '{sample_query[0]}' --> Predicted Intent: {predicted_intent[0]}"
+)
